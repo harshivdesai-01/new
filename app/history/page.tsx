@@ -151,7 +151,7 @@ export default function HistoryPage() {
                       </td>
 
                       <td className="px-6 py-4">
-                        <span className="text-sm font-bold group-hover:text-[#C85A32] transition-colors" style={{ color: 'var(--text-primary)' }}>
+                        <span className="text-sm font-bold group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors" style={{ color: 'var(--text-primary)' }}>
                           {item.holderName || '—'}
                         </span>
                       </td>
@@ -191,7 +191,7 @@ export default function HistoryPage() {
                       <td className="px-6 py-4">
                         <Link
                           href={`/results/${item.id}`}
-                          className="btn-ghost text-xs py-1.5 px-3 rounded-lg font-bold flex items-center gap-1 hover:text-[#C85A32]"
+                          className="btn-ghost text-xs py-1.5 px-3 rounded-lg font-bold flex items-center gap-1 hover:text-emerald-700 dark:hover:text-emerald-400"
                         >
                           <span>Review</span>
                           <ChevronRight className="w-3.5 h-3.5" />

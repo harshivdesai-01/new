@@ -172,7 +172,7 @@ function ReportsContent() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b pb-6" style={{ borderColor: 'var(--border-subtle)' }}>
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <Shield className="w-5 h-5 text-[#C85A32]" />
+                    <Shield className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                     <span className="text-base font-extrabold tracking-tight" style={{ color: 'var(--text-primary)' }}>
                       VERIDOC <span style={{ color: 'var(--accent)' }}>AI</span>
                     </span>
@@ -182,7 +182,7 @@ function ReportsContent() {
                   </h2>
                 </div>
                 <div className="text-left sm:text-right font-mono text-xs" style={{ color: 'var(--text-muted)' }}>
-                  <p>Audit ID: <span className="font-bold text-[#C85A32]">{result.id}</span></p>
+                  <p>Audit ID: <span className="font-bold text-emerald-600 dark:text-emerald-400">{result.id}</span></p>
                   <p>Generated: {formatDate(new Date().toISOString())}</p>
                 </div>
               </div>
@@ -192,7 +192,7 @@ function ReportsContent() {
                 className="p-6 rounded-2xl border flex flex-col md:flex-row items-center gap-6"
                 style={{
                   background: 'var(--gradient-warm-hero)',
-                  borderColor: 'rgba(200, 90, 50, 0.25)',
+                  borderColor: 'var(--border-color)',
                 }}
               >
                 <RiskGauge score={result.risk.overallScore} level={result.risk.riskLevel} size={120} showLabel={false} />

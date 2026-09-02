@@ -82,7 +82,7 @@ export default function DocumentTypeSelector({ selected, onSelect }: DocumentTyp
               <div
                 className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-105"
                 style={{
-                  background: isSelected ? 'var(--accent)' : 'rgba(200, 90, 50, 0.12)',
+                  background: isSelected ? 'var(--accent)' : 'rgba(15, 91, 64, 0.12)',
                   color: isSelected ? '#FFFFFF' : 'var(--accent)',
                 }}
               >

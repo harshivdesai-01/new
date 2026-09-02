@@ -122,7 +122,7 @@ export default function LoginPage() {
               {/* Security feature list */}
               <div className="space-y-3 pt-2">
                 <div className="flex items-center gap-3 p-3 rounded-xl card-warm-subtle">
-                  <FileCheck2 className="w-4 h-4 text-[#C85A32]" />
+                  <FileCheck2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                   <div>
                     <p className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>Multi-Modal OCR & MRZ</p>
                     <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Cross-format structural parsing</p>
@@ -130,7 +130,7 @@ export default function LoginPage() {
                 </div>
 
                 <div className="flex items-center gap-3 p-3 rounded-xl card-warm-subtle">
-                  <ScanFace className="w-4 h-4 text-[#C85A32]" />
+                  <ScanFace className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                   <div>
                     <p className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>1:1 Facial Geometry Match</p>
                     <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Anti-spoofing liveness verification</p>

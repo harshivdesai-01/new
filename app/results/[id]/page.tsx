@@ -13,6 +13,15 @@ import {
   CheckCircle2,
   AlertTriangle,
   FileCheck2,
+  ZoomIn,
+  Flame,
+  Clock,
+  UserCheck,
+  Sparkles,
+  Columns,
+  Network,
+  ShieldCheck,
+  X,
 } from 'lucide-react';
 import TopNav from '@/components/layout/TopNav';
 import RiskScoreHeader from '@/components/results/RiskScoreHeader';
@@ -21,9 +30,21 @@ import OCRResults from '@/components/results/OCRResults';
 import ValidationChecks from '@/components/results/ValidationChecks';
 import FaceVerification from '@/components/results/FaceVerification';
 import FlagExplanation from '@/components/results/FlagExplanation';
-import AIExplanation from '@/components/results/AIExplanation';
+
+// Forensic Feature Components
+import ReviewDesk from '@/components/forensics/ReviewDesk';
+import ForensicMagnifier from '@/components/forensics/ForensicMagnifier';
+import SuspicionHeatmap from '@/components/forensics/SuspicionHeatmap';
+import AuthenticityTimeline from '@/components/forensics/AuthenticityTimeline';
+import RiskContributorBars from '@/components/forensics/RiskContributorBars';
+import OfficerDecisionCenter from '@/components/forensics/OfficerDecisionCenter';
+import InvestigationReportModal from '@/components/forensics/InvestigationReportModal';
+import DocumentCompare from '@/components/forensics/DocumentCompare';
+import FraudNetwork from '@/components/forensics/FraudNetwork';
+import PublicVerificationBadge from '@/components/verify/PublicVerificationBadge';
+
 import { api } from '@/services/api';
-import type { VerificationResult } from '@/types';
+import type { VerificationResult, DocumentComparisonPair } from '@/types';
 import { useLanguage } from '@/context/LanguageContext';
 
 interface ResultsPageProps {
@@ -36,12 +57,22 @@ export default function ResultsPage({ params }: ResultsPageProps) {
   const { t } = useLanguage();
   const [result, setResult] = useState<VerificationResult | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeDocTab, setActiveDocTab] = useState<'original' | 'forensic'>('original');
+  const [activeViewMode, setActiveViewMode] = useState<
+    'summary' | 'desk' | 'magnifier' | 'heatmap' | 'timeline' | 'compare' | 'fraud_network'
+  >('summary');
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [showBadgeModal, setShowBadgeModal] = useState(false);
+  const [comparisonPair, setComparisonPair] = useState<DocumentComparisonPair | null>(null);
 
   useEffect(() => {
-    api
-      .getVerification(id)
-      .then(setResult)
+    Promise.all([
+      api.getVerification(id),
+      api.getDocumentComparison('cmp-001'),
+    ])
+      .then(([res, comp]) => {
+        setResult(res);
+        setComparisonPair(comp);
+      })
       .catch(() => router.push('/'))
       .finally(() => setLoading(false));
   }, [id, router]);
@@ -81,7 +112,7 @@ export default function ResultsPage({ params }: ResultsPageProps) {
         ]}
       />
 
-      <div className="flex-1 p-6 md:p-8 max-w-5xl mx-auto w-full space-y-6">
+      <div className="flex-1 p-6 md:p-8 max-w-6xl mx-auto w-full space-y-6">
         {/* Action Header Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <button
@@ -89,7 +120,7 @@ export default function ResultsPage({ params }: ResultsPageProps) {
             className="btn-ghost text-xs self-start"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Back to History</span>
+            <span>Back to Audit Log</span>
           </button>
 
           <div className="flex items-center gap-2 flex-wrap">
@@ -97,16 +128,24 @@ export default function ResultsPage({ params }: ResultsPageProps) {
               {formatDate(result.createdAt)}
             </span>
             <button
-              onClick={() => router.push(`/reports?id=${result.id}`)}
+              onClick={() => setShowBadgeModal(true)}
+              className="btn-secondary text-xs py-2 px-3"
+              title="Generate Public Verification Badge"
+            >
+              <ShieldCheck className="w-3.5 h-3.5" style={{ color: 'var(--accent)' }} />
+              <span>Public Badge</span>
+            </button>
+            <button
+              onClick={() => router.push(`/traveler-profile?id=${result.travelerProfileId || 'TRV-88210'}`)}
               className="btn-secondary text-xs py-2 px-3"
             >
-              <FileText className="w-3.5 h-3.5" />
-              <span>Full Dossier</span>
+              <UserCheck className="w-3.5 h-3.5" />
+              <span>Traveler Profile</span>
             </button>
             <button
               onClick={() => {
                 navigator.clipboard.writeText(window.location.href);
-                alert('Verification report link copied to clipboard.');
+                alert('Secure verification report link copied to clipboard.');
               }}
               className="btn-secondary text-xs py-2 px-3"
             >
@@ -114,11 +153,11 @@ export default function ResultsPage({ params }: ResultsPageProps) {
               <span>Share</span>
             </button>
             <button
-              onClick={() => router.push(`/reports?id=${result.id}`)}
-              className="btn-primary text-xs py-2 px-3.5 font-bold"
+              onClick={() => setShowReportModal(true)}
+              className="btn-primary text-xs py-2 px-4 font-bold shadow-xs"
             >
               <Download className="w-3.5 h-3.5" />
-              <span>Export PDF</span>
+              <span>Generate Dossier</span>
             </button>
           </div>
         </div>
@@ -130,245 +169,145 @@ export default function ResultsPage({ params }: ResultsPageProps) {
           recommendation={result.risk.recommendation}
         />
 
-        {/* ─── AI Forensic Synthesis ─── */}
-        <AIExplanation explanation={result.risk.aiExplanation} />
-
-        {/* ─── Flagged Anomalies & Evidence (Why was this flagged?) ─── */}
-        {result.flags && result.flags.length > 0 && (
-          <FlagExplanation flags={result.flags} />
-        )}
-
-        {/* ─── Document Forensics View Tab Component ─── */}
-        <div
-          className="p-5 md:p-6 rounded-2xl border shadow-xs space-y-4"
-          style={{
-            background: 'var(--surface)',
-            borderColor: 'var(--border-color)',
-          }}
-        >
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4" style={{ borderColor: 'var(--border-subtle)' }}>
-            <div>
-              <span className="editorial-label">Artifact Inspection</span>
-              <h3 className="text-base font-bold mt-0.5" style={{ color: 'var(--text-primary)' }}>
-                Document Forensics & Tamper Layer
-              </h3>
-            </div>
-
-            {/* Sliding Tab Switch */}
-            <div className="flex p-1 rounded-xl card-warm-subtle self-start">
+        {/* ─── Forensic Mode Navigation Switcher ─── */}
+        <div className="flex p-1.5 rounded-2xl card-warm-subtle overflow-x-auto gap-1 text-xs font-bold">
+          {[
+            { id: 'summary' as const, label: 'Overview & Findings', icon: Sparkles },
+            { id: 'heatmap' as const, label: 'Tamper Heatmap', icon: Flame },
+            { id: 'fraud_network' as const, label: 'Fraud Network', icon: Network },
+            { id: 'desk' as const, label: 'Review Desk', icon: Layers },
+            { id: 'magnifier' as const, label: 'Forensic Loupe', icon: ZoomIn },
+            { id: 'timeline' as const, label: 'Authenticity Timeline', icon: Clock },
+            { id: 'compare' as const, label: 'Document Compare', icon: Columns },
+          ].map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeViewMode === tab.id;
+            return (
               <button
-                onClick={() => setActiveDocTab('original')}
-                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  activeDocTab === 'original'
-                    ? 'bg-white dark:bg-[#1C1714] text-[#C85A32] shadow-sm'
-                    : 'text-stone-500 hover:text-stone-800 dark:hover:text-stone-200'
+                key={tab.id}
+                onClick={() => setActiveViewMode(tab.id)}
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl transition-all whitespace-nowrap cursor-pointer ${
+                  isActive
+                    ? 'bg-[var(--accent)] text-white shadow-xs'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface)]'
                 }`}
               >
-                ORIGINAL DOCUMENT
+                <Icon className="w-3.5 h-3.5" />
+                <span>{tab.label}</span>
               </button>
-              <button
-                onClick={() => setActiveDocTab('forensic')}
-                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                  activeDocTab === 'forensic'
-                    ? 'bg-white dark:bg-[#1C1714] text-[#C85A32] shadow-sm'
-                    : 'text-stone-500 hover:text-stone-800 dark:hover:text-stone-200'
-                }`}
-              >
-                FORENSIC VIEW
-              </button>
-            </div>
-          </div>
-
-          {/* Tab Content */}
-          {activeDocTab === 'original' ? (
-            <div
-              className="rounded-xl border p-8 text-center flex flex-col items-center justify-center space-y-3 card-warm-subtle"
-              style={{ minHeight: '220px' }}
-            >
-              <div
-                className="w-14 h-14 rounded-2xl flex items-center justify-center"
-                style={{ background: 'var(--accent-light)', color: 'var(--accent)' }}
-              >
-                <FileCheck2 className="w-7 h-7" />
-              </div>
-              <div>
-                <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
-                  {result.document.fileName}
-                </p>
-                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                  {result.document.type.replace(/_/g, ' ').toUpperCase()} • Uploaded via Secure Channel
-                </p>
-              </div>
-              <span className="text-[10px] font-mono px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-bold">
-                ✓ 300 DPI COLOR SCAN VERIFIED
-              </span>
-            </div>
-          ) : (
-            <div
-              className="rounded-xl border p-6 space-y-4 card-warm-subtle"
-              style={{ minHeight: '220px' }}
-            >
-              {result.tampering && result.tampering.regions && result.tampering.regions.length > 0 ? (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-xs font-bold text-red-600 dark:text-red-400">
-                    <AlertTriangle className="w-4 h-4" />
-                    <span>Suspicious Manipulated Regions Localized ({result.tampering.regions.length})</span>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {result.tampering.regions.map((region, idx) => (
-                      <div key={idx} className="p-3 rounded-lg border bg-white dark:bg-[#1C1714]" style={{ borderColor: 'rgba(166, 44, 44, 0.3)' }}>
-                        <span className="text-[10px] font-bold text-red-600 uppercase">Region 0{idx + 1}: {region.type}</span>
-                        <p className="text-xs mt-1" style={{ color: 'var(--text-primary)' }}>
-                          Bounding Box: [X: {region.x}, Y: {region.y}, W: {region.width}, H: {region.height}]
-                        </p>
-                        <p className="text-[10px] font-mono mt-0.5 text-stone-500">Confidence: {Math.round(region.confidence * 100)}%</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-8 space-y-2">
-                  <div
-                    className="w-12 h-12 rounded-xl mx-auto flex items-center justify-center"
-                    style={{ background: 'var(--surface)', color: 'var(--text-muted)' }}
-                  >
-                    <Layers className="w-6 h-6" />
-                  </div>
-                  <p className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
-                    Document-level analysis available.
-                  </p>
-                  <p className="text-xs max-w-md mx-auto" style={{ color: 'var(--text-muted)' }}>
-                    Region localization is not currently provided for this artifact. Overall tamper integrity classification was evaluated via high-frequency noise & compression artifact filters.
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
+            );
+          })}
         </div>
 
-        {/* ─── Two Column Layout: Risk Breakdown & Biometrics ─── */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <RiskBreakdown signals={result.risk.signals} />
-          {result.faceVerification && <FaceVerification data={result.faceVerification} />}
-        </div>
+        {/* ─── MODE 1: Overview & Summary ─── */}
+        {activeViewMode === 'summary' && (
+          <div className="space-y-6 fade-in-up">
+            {/* AI Risk Contributor Breakdown Panel */}
+            <RiskContributorBars risk={result.risk} />
 
-        {/* ─── Validation Checks ─── */}
-        {result.validation && <ValidationChecks validation={result.validation} />}
-
-        {/* ─── OCR Extracted Fields ─── */}
-        {result.ocr && <OCRResults ocr={result.ocr} />}
-
-        {/* ─── Tampering Detection Module ─── */}
-        {result.tampering && (
-          <div
-            className="p-5 md:p-6 rounded-2xl border shadow-xs space-y-4"
-            style={{
-              background: 'var(--surface)',
-              borderColor: 'var(--border-color)',
-            }}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="editorial-label">Forensics</span>
-                <h3 className="text-sm md:text-base font-bold mt-0.5" style={{ color: 'var(--text-primary)' }}>
-                  Digital Tampering & Splice Detection
-                </h3>
-              </div>
-              <span
-                className="text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase"
-                style={{
-                  background: result.tampering.isTampered ? 'var(--risk-high-bg)' : 'var(--risk-low-bg)',
-                  color: result.tampering.isTampered ? 'var(--risk-high)' : 'var(--risk-low)',
-                }}
-              >
-                {result.tampering.isTampered ? 'Tampering Detected' : 'Pixel Integrity Confirmed'}
-              </span>
-            </div>
-
-            <div
-              className="p-3.5 rounded-xl border flex items-center justify-between gap-3"
-              style={{
-                background: result.tampering.isTampered ? 'var(--risk-high-bg)' : 'var(--risk-low-bg)',
-                borderColor: result.tampering.isTampered ? 'rgba(166, 44, 44, 0.3)' : 'rgba(45, 122, 77, 0.3)',
-              }}
-            >
-              <span className="text-xs font-bold" style={{ color: result.tampering.isTampered ? 'var(--risk-high)' : 'var(--risk-low)' }}>
-                {result.tampering.isTampered ? '⚠️ Forgery / Splice Artifacts Detected' : '✅ No Digital Splicing or Font Discrepancies'}
-              </span>
-              <span className="text-xs font-mono font-bold" style={{ color: 'var(--text-muted)' }}>
-                Confidence: {Math.round(result.tampering.confidence * 100)}%
-              </span>
-            </div>
-
-            <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-              {result.tampering.explanation}
-            </p>
-
-            {result.tampering.techniques.length > 0 && (
-              <div className="flex flex-wrap gap-2 pt-1">
-                {result.tampering.techniques.map((tech, i) => (
-                  <span
-                    key={i}
-                    className="text-[10px] font-bold px-2.5 py-1 rounded-md"
-                    style={{ background: 'var(--risk-high-bg)', color: 'var(--risk-high)' }}
-                  >
-                    {tech}
-                  </span>
-                ))}
-              </div>
+            {/* Flagged Anomalies & Evidence */}
+            {result.flags && result.flags.length > 0 && (
+              <FlagExplanation flags={result.flags} />
             )}
+
+            {/* Two Column Layout: Risk Breakdown & Biometrics */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <RiskBreakdown signals={result.risk.signals} />
+              {result.faceVerification && <FaceVerification data={result.faceVerification} />}
+            </div>
+
+            {/* Validation Checks */}
+            {result.validation && <ValidationChecks validation={result.validation} />}
+
+            {/* OCR Extracted Fields */}
+            {result.ocr && <OCRResults ocr={result.ocr} />}
+
+            {/* Officer Decision Center */}
+            <OfficerDecisionCenter
+              verificationId={result.id}
+              currentDecision={result.officerDecision}
+              aiRiskLevel={result.risk.riskLevel}
+              onDecisionSaved={(d) => setResult((prev) => (prev ? { ...prev, officerDecision: d } : prev))}
+            />
           </div>
         )}
 
-        {/* ─── Reference Verification ─── */}
-        {result.reference && (
-          <div
-            className="p-5 md:p-6 rounded-2xl border shadow-xs space-y-4"
-            style={{
-              background: 'var(--surface)',
-              borderColor: 'var(--border-color)',
-            }}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="editorial-label">Register Cross-Check</span>
-                <h3 className="text-sm md:text-base font-bold mt-0.5" style={{ color: 'var(--text-primary)' }}>
-                  Authority Reference Cross-Reference
-                </h3>
-              </div>
-              <span
-                className="text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase"
-                style={{
-                  background: result.reference.isVerified ? 'var(--risk-low-bg)' : 'var(--risk-high-bg)',
-                  color: result.reference.isVerified ? 'var(--risk-low)' : 'var(--risk-high)',
-                }}
-              >
-                {result.reference.isVerified ? 'Register Verified' : 'Discrepancy Found'}
-              </span>
-            </div>
+        {/* ─── MODE: Visual Tamper Heatmap ─── */}
+        {activeViewMode === 'heatmap' && (
+          <div className="fade-in-up">
+            <SuspicionHeatmap
+              documentName={result.document.fileName}
+              regions={result.tampering?.regions || []}
+            />
+          </div>
+        )}
 
-            <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-              {result.reference.explanation}
-            </p>
+        {/* ─── MODE: Fraud Ring Detection (Fraud Network) ─── */}
+        {activeViewMode === 'fraud_network' && (
+          <div className="fade-in-up">
+            <FraudNetwork />
+          </div>
+        )}
 
-            {result.reference.referenceRecord && (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs pt-1">
-                {[
-                  ['Holder Name', result.reference.referenceRecord.fullName],
-                  ['Document Number', result.reference.referenceRecord.documentNumber],
-                  ['Date of Birth', result.reference.referenceRecord.dateOfBirth],
-                  ['Authority Status', result.reference.referenceRecord.status.toUpperCase()],
-                ].map(([label, val]) => (
-                  <div key={label} className="p-3 rounded-xl card-warm-subtle">
-                    <span className="text-[10px] font-medium" style={{ color: 'var(--text-muted)' }}>{label}</span>
-                    <p className="font-bold mt-0.5 truncate" style={{ color: 'var(--text-primary)' }}>{val}</p>
-                  </div>
-                ))}
-              </div>
-            )}
+        {/* ─── MODE 2: Split-Screen Review Desk ─── */}
+        {activeViewMode === 'desk' && (
+          <div className="fade-in-up">
+            <ReviewDesk result={result} />
+          </div>
+        )}
+
+        {/* ─── MODE 3: Forensic Magnifier / Loupe ─── */}
+        {activeViewMode === 'magnifier' && (
+          <div className="fade-in-up space-y-4">
+            <ForensicMagnifier
+              documentTitle={result.document.fileName}
+              regions={result.tampering?.regions || []}
+            />
+          </div>
+        )}
+
+        {/* ─── MODE 5: Authenticity Timeline ─── */}
+        {activeViewMode === 'timeline' && (
+          <div className="fade-in-up">
+            <AuthenticityTimeline events={result.timeline || []} />
+          </div>
+        )}
+
+        {/* ─── MODE 6: Document Compare ─── */}
+        {activeViewMode === 'compare' && comparisonPair && (
+          <div className="fade-in-up">
+            <DocumentCompare pair={comparisonPair} />
           </div>
         )}
       </div>
+
+      {/* Public Verification Badge Modal */}
+      {showBadgeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div
+            className="relative w-full max-w-lg rounded-3xl border p-6 md:p-8 space-y-4 shadow-xl fade-in-up"
+            style={{
+              background: 'var(--surface)',
+              borderColor: 'var(--border-color)',
+            }}
+          >
+            <button
+              onClick={() => setShowBadgeModal(false)}
+              className="absolute top-5 right-5 p-2 rounded-full hover:bg-[var(--surface-warm)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <PublicVerificationBadge result={result} onClose={() => setShowBadgeModal(false)} />
+          </div>
+        </div>
+      )}
+
+      {/* Investigation Report Modal (Dossier Generator) */}
+      <InvestigationReportModal
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        result={result}
+      />
     </>
   );
 }

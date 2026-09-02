@@ -16,6 +16,8 @@ const typeLabels: Record<DocumentType, string> = {
   passport: 'International Passport',
   gov_id: 'National Identity Card',
   driving_license: 'Driver’s License',
+  visa: 'Consular Travel Visa',
+  permit: 'Residence / Border Permit',
   other: 'Other Identity Document',
 };
 

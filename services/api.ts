@@ -8,11 +8,12 @@ import {
   VerificationSettings,
   ReferenceRecord,
   DemoScenario,
+  TravelerProfile,
+  DocumentComparisonPair,
+  OfficerDecision,
 } from '@/types';
 
 // ─── API Interface ──────────────────────────────────────────────────────────
-// This service layer defines the contract between the frontend and backend.
-// Currently backed by mock-api.ts; swap to real HTTP calls when the backend is ready.
 
 export interface VeridocAPI {
   // Analysis
@@ -39,8 +40,16 @@ export interface VeridocAPI {
   getNotifications(): Promise<Notification[]>;
   markNotificationRead(id: string): Promise<void>;
 
-  // Feedback
+  // Feedback & Officer Actions
   submitFeedback(feedback: Feedback): Promise<void>;
+  submitOfficerDecision(verificationId: string, decision: OfficerDecision): Promise<VerificationResult>;
+
+  // Multi-Document Traveler Profiles
+  getTravelerProfile(id: string): Promise<TravelerProfile>;
+  getAllTravelerProfiles(): Promise<TravelerProfile[]>;
+
+  // Document Comparison Pairs
+  getDocumentComparison(id: string): Promise<DocumentComparisonPair>;
 
   // Settings
   getSettings(): Promise<VerificationSettings>;

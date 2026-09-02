@@ -21,16 +21,21 @@ import {
   LogIn,
   Menu,
   X,
+  Layers,
+  Users,
+  Zap,
 } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 import { useLanguage } from '@/context/LanguageContext';
+import LanguageModal from './LanguageModal';
 
 export default function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [showLangModal, setShowLangModal] = useState(false);
   const { theme, toggleTheme } = useTheme();
-  const { language, setLanguage, t } = useLanguage();
+  const { language, currentLanguageInfo, t } = useLanguage();
 
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/';
@@ -39,14 +44,14 @@ export default function Sidebar() {
 
   const navSections = [
     {
-      title: 'MAIN',
+      title: 'PRIMARY OPERATIONS',
       items: [
         {
           href: '/verify',
           label: t('nav.verify', 'Verify Document'),
           icon: ShieldCheck,
           isHero: true,
-          badge: 'HERO',
+          badge: 'PRIMARY',
         },
         {
           href: '/',
@@ -54,24 +59,40 @@ export default function Sidebar() {
           icon: LayoutDashboard,
         },
         {
+          href: '/desk',
+          label: t('nav.reviewDesk', 'Review Desk'),
+          icon: Layers,
+          badge: 'NEW',
+        },
+        {
+          href: '/traveler-profile',
+          label: t('nav.travelerProfile', 'Traveler Profile'),
+          icon: Users,
+        },
+        {
           href: '/history',
-          label: t('nav.history', 'History'),
+          label: t('nav.history', 'Audit History'),
           icon: History,
         },
         {
           href: '/reports',
-          label: t('nav.reports', 'Reports'),
+          label: t('nav.reports', 'Forensic Reports'),
           icon: FileText,
         },
       ],
     },
     {
-      title: 'INSIGHTS',
+      title: 'INTELLIGENCE',
       items: [
         {
           href: '/model-insights',
           label: t('nav.modelInsights', 'Model Insights'),
           icon: Brain,
+        },
+        {
+          href: '/coverage',
+          label: 'Live Coverage Map',
+          icon: Globe,
         },
       ],
     },
@@ -97,7 +118,7 @@ export default function Sidebar() {
       {/* Mobile Toggle Button */}
       <button
         onClick={() => setMobileOpen(!mobileOpen)}
-        className="md:hidden fixed top-3.5 left-4 z-50 p-2 rounded-xl border bg-white/90 dark:bg-[#1C1714]/90 backdrop-blur-md shadow-md"
+        className="md:hidden fixed top-3.5 left-4 z-50 p-2 rounded-xl border bg-white/90 dark:bg-[#101E17]/90 backdrop-blur-md shadow-md"
         style={{ borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
         aria-label="Toggle navigation"
       >
@@ -132,11 +153,10 @@ export default function Sidebar() {
             className="flex items-center gap-3 group text-left overflow-hidden"
           >
             <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-105"
+              className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-105 shadow-md"
               style={{
                 background: 'var(--gradient-accent)',
                 color: '#FFFFFF',
-                boxShadow: '0 4px 14px var(--accent-glow)',
               }}
             >
               <Shield className="w-5 h-5" />
@@ -147,7 +167,7 @@ export default function Sidebar() {
                   VERIDOC <span style={{ color: 'var(--accent)' }}>AI</span>
                 </span>
                 <span className="text-[10px] font-semibold tracking-wider uppercase" style={{ color: 'var(--text-muted)' }}>
-                  Identity Security
+                  Border Intelligence
                 </span>
               </div>
             )}
@@ -175,7 +195,7 @@ export default function Sidebar() {
                       item.isHero && !active ? 'border' : ''
                     }`}
                     style={{
-                      borderColor: item.isHero && !active ? 'rgba(200, 90, 50, 0.25)' : undefined,
+                      borderColor: item.isHero && !active ? 'rgba(49, 92, 69, 0.25)' : undefined,
                       background: item.isHero && !active ? 'var(--accent-light)' : undefined,
                     }}
                     title={collapsed && !mobileOpen ? item.label : undefined}
@@ -193,15 +213,15 @@ export default function Sidebar() {
                         active
                           ? 'text-white'
                           : item.isHero
-                          ? 'text-amber-800 dark:text-amber-300'
+                          ? 'text-[var(--accent)]'
                           : 'text-stone-600 dark:text-stone-400 group-hover:text-stone-900 dark:group-hover:text-white'
                       }`}
                       style={{
                         background: active
                           ? 'var(--accent)'
                           : item.isHero
-                          ? 'rgba(200, 90, 50, 0.15)'
-                          : 'rgba(60, 45, 35, 0.04)',
+                          ? 'rgba(49, 92, 69, 0.15)'
+                          : 'rgba(49, 92, 69, 0.05)',
                       }}
                     >
                       <Icon className="w-4 h-4" />
@@ -235,34 +255,34 @@ export default function Sidebar() {
         {/* Bottom Utility Controls */}
         <div className="p-3 space-y-2 border-t flex-shrink-0" style={{ borderColor: 'var(--border-subtle)' }}>
           {/* Language & Theme Controls */}
-          {(!collapsed || mobileOpen) ? (
+          {!collapsed || mobileOpen ? (
             <div className="grid grid-cols-2 gap-1.5 p-1.5 rounded-xl card-warm-subtle">
               {/* Language Switch */}
               <button
-                onClick={() => setLanguage(language === 'en' ? 'hi' : 'en')}
-                className="flex items-center justify-center gap-1.5 py-1 px-2 rounded-lg text-xs font-semibold hover:bg-white/60 dark:hover:bg-white/10 transition-colors"
+                onClick={() => setShowLangModal(true)}
+                className="flex items-center justify-center gap-1.5 py-1 px-2 rounded-lg text-xs font-semibold hover:bg-white/60 dark:hover:bg-white/10 transition-colors cursor-pointer"
                 style={{ color: 'var(--text-secondary)' }}
-                title="Switch Language"
+                title="Switch Language (17 available)"
               >
-                <Globe className="w-3.5 h-3.5" />
-                <span>{language === 'en' ? 'EN' : 'हिन्दी'}</span>
+                <Globe className="w-3.5 h-3.5" style={{ color: 'var(--accent)' }} />
+                <span className="font-bold">{currentLanguageInfo.code.toUpperCase()}</span>
               </button>
 
               {/* Theme Switch */}
               <button
                 onClick={toggleTheme}
-                className="flex items-center justify-center gap-1.5 py-1 px-2 rounded-lg text-xs font-semibold hover:bg-white/60 dark:hover:bg-white/10 transition-colors"
+                className="flex items-center justify-center gap-1.5 py-1 px-2 rounded-lg text-xs font-semibold hover:bg-white/60 dark:hover:bg-white/10 transition-colors cursor-pointer"
                 style={{ color: 'var(--text-secondary)' }}
                 title="Toggle Theme"
               >
                 {theme === 'light' ? (
                   <>
-                    <Moon className="w-3.5 h-3.5" />
+                    <Moon className="w-3.5 h-3.5" style={{ color: 'var(--accent)' }} />
                     <span>Dark</span>
                   </>
                 ) : (
                   <>
-                    <Sun className="w-3.5 h-3.5 text-amber-400" />
+                    <Sun className="w-3.5 h-3.5" style={{ color: 'var(--accent)' }} />
                     <span>Light</span>
                   </>
                 )}
@@ -271,12 +291,20 @@ export default function Sidebar() {
           ) : (
             <div className="flex flex-col items-center gap-2">
               <button
+                onClick={() => setShowLangModal(true)}
+                className="p-2 rounded-lg hover:bg-white/50 dark:hover:bg-white/10 transition-colors"
+                style={{ color: 'var(--text-secondary)' }}
+                title="Switch Language"
+              >
+                <Globe className="w-4 h-4" style={{ color: 'var(--accent)' }} />
+              </button>
+              <button
                 onClick={toggleTheme}
                 className="p-2 rounded-lg hover:bg-white/50 dark:hover:bg-white/10 transition-colors"
                 style={{ color: 'var(--text-secondary)' }}
                 title="Toggle Theme"
               >
-                {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4 text-amber-400" />}
+                {theme === 'light' ? <Moon className="w-4 h-4" style={{ color: 'var(--accent)' }} /> : <Sun className="w-4 h-4" style={{ color: 'var(--accent)' }} />}
               </button>
             </div>
           )}
@@ -285,7 +313,7 @@ export default function Sidebar() {
           {(!collapsed || mobileOpen) && (
             <div className="px-2 py-1.5 rounded-lg flex items-center gap-2 text-[11px]" style={{ color: 'var(--text-muted)' }}>
               <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: 'var(--risk-low)' }} />
-              <span className="font-medium truncate">{t('nav.systemOnline', 'Verification Engine Online')}</span>
+              <span className="font-medium truncate">{t('nav.systemOnline', 'Forensic Engine Online')}</span>
             </div>
           )}
         </div>
@@ -293,7 +321,7 @@ export default function Sidebar() {
         {/* Desktop Collapse Toggle Button */}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="hidden md:flex absolute -right-3 top-24 w-6 h-6 rounded-full items-center justify-center z-50 shadow-md transition-transform hover:scale-110"
+          className="hidden md:flex absolute -right-3 top-24 w-6 h-6 rounded-full items-center justify-center z-50 shadow-md transition-transform hover:scale-110 cursor-pointer"
           style={{
             background: 'var(--surface)',
             border: '1px solid var(--border-color)',
@@ -315,6 +343,9 @@ export default function Sidebar() {
           collapsed ? 'w-[76px]' : 'w-[268px]'
         }`}
       />
+
+      {/* Language Modal */}
+      <LanguageModal isOpen={showLangModal} onClose={() => setShowLangModal(false)} />
     </>
   );
 }

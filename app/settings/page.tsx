@@ -22,10 +22,11 @@ import { defaultSettings } from '@/services/mock-data';
 import { useTheme } from '@/context/ThemeContext';
 import { useLanguage, type Language } from '@/context/LanguageContext';
 import { useSecurity } from '@/context/SecurityContext';
+import LanguageModal from '@/components/layout/LanguageModal';
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
-  const { language, setLanguage, t } = useLanguage();
+  const { language, currentLanguageInfo, setLanguage, t } = useLanguage();
   const {
     autoLockEnabled,
     setAutoLockEnabled,
@@ -38,6 +39,7 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [showLangModal, setShowLangModal] = useState(false);
 
   useEffect(() => {
     api
@@ -108,9 +110,9 @@ export default function SettingsPage() {
               <Globe className="w-5 h-5" />
             </div>
             <div>
-              <span className="editorial-label">Interface</span>
+              <span className="editorial-label">Interface System</span>
               <h3 className="text-base font-bold mt-0.5" style={{ color: 'var(--text-primary)' }}>
-                {t('settings.appearance', 'Appearance & Localization')}
+                {t('settings.appearance', 'Appearance & Security Theme')}
               </h3>
             </div>
           </div>
@@ -119,75 +121,64 @@ export default function SettingsPage() {
             {/* Theme Mode */}
             <div className="p-4 rounded-2xl border card-warm-subtle space-y-2">
               <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
-                {t('settings.theme', 'Theme Mode')}
+                {t('settings.theme', 'Security Color Theme')}
               </span>
               <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-stone-200/50 dark:bg-stone-800/50">
                 <button
                   type="button"
                   onClick={() => setTheme('light')}
-                  className={`flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition-all ${
+                  className={`flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                     theme === 'light'
-                      ? 'bg-white text-[#C85A32] shadow-sm'
+                      ? 'bg-white text-emerald-700 shadow-sm'
                       : 'text-stone-500 hover:text-stone-800'
                   }`}
                 >
                   <Sun className="w-3.5 h-3.5" />
-                  <span>Warm Light</span>
+                  <span>Security Light</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setTheme('dark')}
-                  className={`flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition-all ${
+                  className={`flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                     theme === 'dark'
-                      ? 'bg-[#1C1714] text-[#D96B43] shadow-sm'
+                      ? 'bg-[#101E17] text-emerald-400 shadow-sm'
                       : 'text-stone-400 hover:text-stone-200'
                   }`}
                 >
                   <Moon className="w-3.5 h-3.5" />
-                  <span>Espresso Dark</span>
+                  <span>Obsidian Dark</span>
                 </button>
               </div>
             </div>
 
-            {/* System Language */}
-            <div className="p-4 rounded-2xl border card-warm-subtle space-y-2">
-              <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
-                {t('settings.language', 'System Language')}
-              </span>
-              <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-stone-200/50 dark:bg-stone-800/50">
-                <button
-                  type="button"
-                  onClick={() => setLanguage('en')}
-                  className={`py-2 rounded-lg text-xs font-bold transition-all ${
-                    language === 'en'
-                      ? 'bg-white dark:bg-[#1C1714] text-[#C85A32] shadow-sm'
-                      : 'text-stone-500 hover:text-stone-800 dark:hover:text-stone-200'
-                  }`}
-                >
-                  English (US)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLanguage('hi')}
-                  className={`py-2 rounded-lg text-xs font-bold transition-all ${
-                    language === 'hi'
-                      ? 'bg-white dark:bg-[#1C1714] text-[#C85A32] shadow-sm'
-                      : 'text-stone-500 hover:text-stone-800 dark:hover:text-stone-200'
-                  }`}
-                >
-                  हिन्दी (Hindi)
-                </button>
+            {/* System Language Modal Trigger */}
+            <div className="p-4 rounded-2xl border card-warm-subtle space-y-2 flex flex-col justify-between">
+              <div>
+                <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
+                  {t('settings.language', 'System Language / Locale')}
+                </span>
+                <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                  Active: <strong>{currentLanguageInfo.nativeName}</strong> ({currentLanguageInfo.region})
+                </p>
               </div>
+              <button
+                type="button"
+                onClick={() => setShowLangModal(true)}
+                className="btn-primary text-xs py-2 px-3 font-bold justify-center"
+              >
+                <Globe className="w-3.5 h-3.5" />
+                <span>Change Locale (17 Available)</span>
+              </button>
             </div>
           </div>
         </div>
 
-        {/* ─── 2. Security & Auto-Lock (Hero Security Setting) ─── */}
+        {/* ─── 2. Security & Auto-Lock ─── */}
         <div
           className="p-6 md:p-8 rounded-3xl border shadow-xs space-y-5"
           style={{
             background: 'var(--surface)',
-            borderColor: 'rgba(200, 90, 50, 0.3)',
+            borderColor: 'var(--border-color)',
           }}
         >
           <div className="flex items-center justify-between flex-wrap gap-2">
@@ -201,7 +192,7 @@ export default function SettingsPage() {
               <div>
                 <span className="editorial-label">Credential Protection</span>
                 <h3 className="text-base font-bold mt-0.5" style={{ color: 'var(--text-primary)' }}>
-                  {t('settings.security', 'Security & Auto-Lock')}
+                  {t('settings.security', 'Border Security & Auto-Lock')}
                 </h3>
               </div>
             </div>
@@ -216,7 +207,7 @@ export default function SettingsPage() {
           </div>
 
           <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-            Automatically hides sensitive documents, OCR transcripts, and biometric facial matches after a period of user inactivity.
+            Automatically conceals sensitive passenger records, OCR transcripts, and biometric facial matches after user inactivity.
           </p>
 
           <div className="space-y-4 pt-1">
@@ -224,10 +215,10 @@ export default function SettingsPage() {
             <div className="p-4 rounded-2xl border card-warm-subtle flex items-center justify-between">
               <div>
                 <p className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
-                  {t('settings.autoLock', 'Auto-Lock Sensitive Documents')}
+                  {t('settings.autoLock', 'Auto-Lock Sensitive Inspection Windows')}
                 </p>
                 <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
-                  {autoLockEnabled ? 'Active — Inactivity timer monitoring keyboard, mouse, and touch events.' : 'Disabled — Sensitive views remain unlocked.'}
+                  {autoLockEnabled ? 'Active — Timer tracking mouse, keyboard, and touch events.' : 'Disabled — Sensitive views remain unlocked.'}
                 </p>
               </div>
               <Toggle
@@ -240,13 +231,13 @@ export default function SettingsPage() {
             {autoLockEnabled && (
               <div className="p-4 rounded-2xl border card-warm-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-3 fade-in-up">
                 <div className="flex items-center gap-2.5">
-                  <Clock className="w-4 h-4 text-amber-600" />
+                  <Clock className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                   <div>
                     <p className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
-                      Inactivity Lock Duration
+                      Inactivity Lock Threshold
                     </p>
                     <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
-                      A 30-second warning countdown will display before session protection activates.
+                      A 30-second warning countdown will display before session protection engages.
                     </p>
                   </div>
                 </div>
@@ -256,7 +247,7 @@ export default function SettingsPage() {
                   onChange={(e) => setLockDurationMinutes(parseInt(e.target.value, 10))}
                   className="input w-auto text-xs font-bold"
                 >
-                  <option value={1}>1 Minute (Strict Audit)</option>
+                  <option value={1}>1 Minute (High Security)</option>
                   <option value={5}>5 Minutes (Default)</option>
                   <option value={10}>10 Minutes</option>
                   <option value={15}>15 Minutes</option>
@@ -283,9 +274,9 @@ export default function SettingsPage() {
               <Shield className="w-5 h-5" />
             </div>
             <div>
-              <span className="editorial-label">ML Fusion</span>
+              <span className="editorial-label">Inference Thresholds</span>
               <h3 className="text-base font-bold mt-0.5" style={{ color: 'var(--text-primary)' }}>
-                Verification & Risk Thresholds
+                Verification & Risk Cutoffs
               </h3>
             </div>
           </div>
@@ -293,20 +284,20 @@ export default function SettingsPage() {
           <div className="space-y-4 pt-1">
             {[
               {
-                label: 'Low Risk Threshold (Safe Zone)',
-                desc: 'Audits scoring below this value are classified as Low Risk',
+                label: 'Low Risk Cutoff (Clear Zone)',
+                desc: 'Audits scoring below this value qualify for automated border clearance',
                 key: 'low' as const,
                 color: 'var(--risk-low)',
               },
               {
-                label: 'Review Threshold (Manual Triage)',
-                desc: 'Audits scoring between low and this value trigger analyst review',
+                label: 'Review Threshold (Officer Referral)',
+                desc: 'Audits scoring between low and this value trigger secondary counter inspection',
                 key: 'review' as const,
                 color: 'var(--risk-review)',
               },
               {
-                label: 'High Risk Threshold (Fraud Alarm)',
-                desc: 'Audits scoring above this value are flagged as high risk',
+                label: 'High Risk Threshold (Fraud Alert)',
+                desc: 'Audits scoring above this value trigger immediate security escalation',
                 key: 'high' as const,
                 color: 'var(--risk-high)',
               },
@@ -352,13 +343,13 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <label className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>
-                    Face Match Similarity Threshold
+                    Biometric Face Match Similarity Threshold
                   </label>
                   <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
-                    Minimum embedding cosine similarity required to confirm applicant identity
+                    Minimum cosine similarity required to confirm traveler 1:1 identity
                   </p>
                 </div>
-                <span className="text-sm font-mono font-extrabold text-[#C85A32]">
+                <span className="text-sm font-mono font-extrabold text-emerald-600 dark:text-emerald-400">
                   {(settings.faceMatchThreshold * 100).toFixed(0)}%
                 </span>
               </div>
@@ -375,7 +366,7 @@ export default function SettingsPage() {
                 }
                 className="w-full h-2 rounded-full appearance-none cursor-pointer"
                 style={{
-                  background: `linear-gradient(to right, #C85A32 ${settings.faceMatchThreshold * 100}%, var(--border-subtle) ${settings.faceMatchThreshold * 100}%)`,
+                  background: `linear-gradient(to right, #059669 ${settings.faceMatchThreshold * 100}%, var(--border-subtle) ${settings.faceMatchThreshold * 100}%)`,
                 }}
               />
             </div>
@@ -398,7 +389,7 @@ export default function SettingsPage() {
               <Database className="w-5 h-5" />
             </div>
             <div>
-              <span className="editorial-label">Compliance</span>
+              <span className="editorial-label">Compliance & Privacy</span>
               <h3 className="text-base font-bold mt-0.5" style={{ color: 'var(--text-primary)' }}>
                 Privacy Mode & Data Retention
               </h3>
@@ -462,13 +453,16 @@ export default function SettingsPage() {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="btn-primary text-xs py-3 px-6 font-bold shadow-lg"
+            className="btn-primary text-xs py-3 px-6 font-bold shadow-md"
           >
             <Save className="w-4 h-4" />
             <span>{saving ? 'Saving Preferences...' : saved ? '✓ Saved Successfully!' : t('btn.save', 'Save Settings')}</span>
           </button>
         </div>
       </div>
+
+      {/* Language Modal */}
+      <LanguageModal isOpen={showLangModal} onClose={() => setShowLangModal(false)} />
     </>
   );
 }

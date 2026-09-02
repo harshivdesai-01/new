@@ -58,7 +58,7 @@ export default function StepIndicator({ steps, currentStep, onStepClick }: StepI
                   <span
                     className={`text-xs font-bold whitespace-nowrap transition-colors ${
                       isCurrent
-                        ? 'text-[#C85A32] dark:text-[#D96B43]'
+                        ? 'text-emerald-700 dark:text-emerald-400'
                         : isCompleted
                         ? 'text-stone-800 dark:text-stone-200'
                         : 'text-stone-400 dark:text-stone-500'
